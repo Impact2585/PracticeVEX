@@ -1,0 +1,138 @@
+#include "robot-config.h"
+#include <cmath>
+/*---------------------------------------------------------------------------                                        
+        Description: Team 2585's VEX Control Software for 2018-19          
+---------------------------------------------------------------------------*/
+
+//Creates a competition object that allows access to Competition methods.
+competition    Competition;
+
+/*---------------------------------------------------------------------------*/
+/*                          Pre-Autonomous Functions                         */
+/*                                                                           */
+/*  Performs functions before the game starts. You must return from this     */
+/*  or the autonomous and usercontrol tasks will not be started. This        */
+/*  function is only called once after the cortex has been powered on and    */ 
+/*  not every time that the robot is disabled.                               */
+/*---------------------------------------------------------------------------*/
+void pre_auton( void ) {
+    return;
+}
+
+void runIntake(float intakeSpeed){
+    IntakeMotor.spin(directionType::fwd, intakeSpeed, velocityUnits::pct);
+}
+
+// ! TASK: Create a function to move the arm based on an input speed
+
+void runDriveTank(float leftvL, float rightvL, bool isReversed) {
+    if (isReversed) {
+        leftvL *= -1;
+        rightvL *= -1;
+    }
+    
+    // ! TASK: if either the leftvL or the rightVL is less than 5%, set it to 0
+    
+    LeftBackMotor.spin(directionType::fwd, leftvL, velocityUnits::pct);
+    LeftFrontMotor.spin(directionType::fwd, leftvL, velocityUnits::pct);
+   
+    RightBackMotor.spin(directionType::fwd, rightvL, velocityUnits::pct);
+    RightFrontMotor.spin(directionType::fwd, rightvL, velocityUnits::pct);
+}
+
+void runDriveArcade(float powervL, float rotationvL, bool isReversed) {
+    //positive rotation --> turning right
+    //negative rotation --> turning left
+    
+    // ! TASK: if the rotationvL is less than 5%, set it to 0
+    
+    powervL = (isReversed) ? powervL * -1 : powervL;
+    runDriveTank(powervL + rotationvL, powervL - rotationvL, false);
+}
+
+/*---------------------------------------------------------------------------*/
+/*                                                                           */
+/*                              Autonomous Task                              */
+/*                                                                           */
+/*  This task is used to control the robot during the autonomous phase of    */
+/*  a VEX Competition.                                                       */
+/*---------------------------------------------------------------------------*/
+void autonomous( void ) {
+    
+}
+
+/*---------------------------------------------------------------------------*/
+/*                                                                           */
+/*                              User Control Task                            */
+/*                                                                           */
+/*  This task is used to control your robot during the user control phase of */
+/*  a VEX Competition.                                                       */
+/*---------------------------------------------------------------------------*/
+void usercontrol( void ) {
+    pre_auton();
+    int targetFlyWheelSpeed = 185; //rpm
+
+    Controller1.Screen.print("Welcome Aboard!");
+    Controller1.Screen.newLine();
+    Controller1.Screen.print("Get ready to rumble!!!");
+    Controller1.Screen.newLine();
+    Controller1.rumble("--..-");
+    
+    while (1) {
+        // This is the main execution loop for the user control program.
+        // Each time through the loop your program should update motor + servo
+        
+        //Drive Control
+        
+        // Tank Control
+        float leftVL = Controller1.Axis3.value() * 12.0 / 127;
+        float rightVL = Controller1.Axis2.value() * 12.0 / 127;
+        runDriveTank(leftVL, rightVL, false);
+        
+        // Intake Control
+        if(Controller1.ButtonL1.pressing()) { //If the upper left trigger is pressed...
+            //...Spin the intake motor forward.
+            runIntake(100);
+        } else if(Controller1.ButtonL2.pressing()) {
+            //...Spin the intake motor backward.
+            runIntake(-100);
+        } else {
+            //...Stop spinning intake motor.
+            runIntake(0);
+        }
+        
+        // ! TASK: Create a similar arm control structure using the X and Y buttons and the
+        // method declared above
+        
+        // ! CHALLENGE: Update the shooter below to toggle on and off with the R1 and 
+        // R2 buttons, instead of holding down the R1 button
+        
+        // Shooter Control
+        if(Controller1.ButtonR1.pressing()){
+            //...Spin the shooter motor forward.
+            ShooterMotor.spin(directionType::fwd, 100, velocityUnits::pct);
+            if(ShooterMotor.velocity(velocityUnits::rpm) > 185){
+                Controller1.Screen.print("FULL POWER REACHED");
+                Controller1.rumble("-.-");
+            }       
+        } else {
+            ShooterMotor.spin(directionType::fwd, 0, velocityUnits::pct);
+        }
+        
+        task::sleep(30); //Sleep the task for a short amount of time to prevent wasted resources. 
+    }
+}
+
+// Main will set up the competition functions and callbacks.
+int main() {
+    //Run the pre-autonomous function. 
+    pre_auton();
+    //Set up callbacks for autonomous and driver control periods.
+    Competition.autonomous( autonomous );
+    Competition.drivercontrol( usercontrol );
+
+    //Prevent main from exiting with an infinite loop.                        
+    while(1) {
+      task::sleep(100);//Sleep the task for a short amount of time to prevent wasted resources.
+    }
+}

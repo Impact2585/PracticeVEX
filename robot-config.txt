@@ -1,0 +1,16 @@
+using namespace vex;
+brain Brain;
+controller Controller1 = controller();
+
+motor LeftBackMotor = motor(PORT1, false);
+motor LeftFrontMotor = motor(PORT2, false);
+motor RightBackMotor = motor(PORT10, true);
+motor RightFrontMotor = motor(PORT9, true);
+motor driveTrainMotors[] = {LeftBackMotor, LeftFrontMotor, RightBackMotor, RightFrontMotor};
+// ! TASK: Create an arm motor at port 11 that is reversed
+motor IntakeMotor = motor(PORT3);
+motor ShooterMotor = motor(PORT5, true);
+
+// Robot starting position
+const bool isBlue = false;
+const bool isFront = true;
